@@ -3,5 +3,5 @@ dependencies:
     - exit 0
 
 test:
-  override:
-    - exit 0
+  post:
+    - bundle exec rake custom:test:suite
