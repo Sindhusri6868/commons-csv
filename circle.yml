@@ -1,32 +1,24 @@
 machine:
-  ruby:
-    version: 2.2.3
-
-## Customize dependencies
+  environment:
+    PATH: "$PATH:~/$CIRCLE_PROJECT_REPONAME/bin"
+  python:
+    version: 2.7.9
+  services:
+    - docker
 dependencies:
-  pre:
-    - gem install bundler --pre
-
-  override:
-    - bundle install -j10
-    - rake appraisal:install
-
-## Customize test commands
+  post:
+    - curl -L -o ~/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.5rc1/jq-linux-x86_64-static && chmod +x ~/bin/jq
+    - pip install --upgrade awscli
+    - docker build --rm=false -t bellkev/ecs-demo:$CIRCLE_SHA1 . | cat
+    - docker pull bellkev/nginx-base:stable | cat
 test:
   override:
-    - case $CIRCLE_NODE_INDEX in 0) rake test:unit ;; 1) rake test:integration:rake ;; esac:
-        parallel: true
-    - case $CIRCLE_NODE_INDEX in 0) rake test:integration:rails_4_0 ;; 1) rake test:integration:rails_3_2 ;; esac:
-        parallel: true
-    - case $CIRCLE_NODE_INDEX in 0) rake test:integration:rails_3_1 ;; 1) rake test:integration:rails_3_0 ;; esac:
-        parallel: true
-    - case $CIRCLE_NODE_INDEX in 0) rake test:integration:rack ;; 1) rake test:integration:sinatra ;; esac:
-        parallel: true
-    - case $CIRCLE_NODE_INDEX in 0) rake test:cucumber:rails_4_0 ;; 1) rake test:cucumber:rails_3_2 ;; esac:
-        parallel: true
-    - case $CIRCLE_NODE_INDEX in 0) rake test:cucumber:rails_3_1 ;; 1) rake test:cucumber:rails_3_0 ;; esac:
-        parallel: true
-    - case $CIRCLE_NODE_INDEX in 0) rake test:cucumber:sinatra ;; 1) rake test:cucumber:rake ;; esac:
-        parallel: true
-    - rake test:cucumber:rack
-    - rake coveralls:push
+    - nosetests
+    - docker run --name uwsgi bellkev/ecs-demo:$CIRCLE_SHA1:
+        background: true
+    - docker run --name nginx -p 8000:8000 --link uwsgi:uwsgi bellkev/nginx-base:stable:
+        background: true
+    - sleep 3
+    - curl http://$DOCKER_IP:8000 | grep "Hello"
+    - do-if-commit-tag ondemand ./test.sh single
+    - do-exclusively --tag staging ./test.sh cluster
