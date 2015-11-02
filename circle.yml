@@ -1,25 +1,3 @@
-dependencies:
-  override:
-    - ./README.md dependencies
-
 test:
-  pre:
-    - ./README.md pre_test
   override:
-    - ./README.md test:
-        parallel: true
-  post:
-    - ./circle.sh post_test
-
-machine:
-  pre:
-    - commons-csv/README.md pre_machine
-  services:
-    - docker
-  environment:
-    DOCKER_HOST: tcp://127.0.0.1:2375
-    MAVEN_OPTS: -Xmx128m
-
-general:
-  artifacts:
-    - artifacts
+    - echo Hey!
