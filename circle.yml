@@ -1,24 +1,25 @@
+dependencies:
+  override:
+    - ./circle.sh dependencies
+
+test:
+  pre:
+    - ./circle.sh pre_test
+  override:
+    - ./circle.sh test:
+        parallel: true
+  post:
+    - ./circle.sh post_test
+
 machine:
-  environment:
-    PATH: "$PATH:~/$CIRCLE_PROJECT_REPONAME/bin"
-  python:
-    version: 2.7.9
+  pre:
+    - helios/circle.sh pre_machine
   services:
     - docker
-dependencies:
-  post:
-    - curl -L -o ~/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.5rc1/jq-linux-x86_64-static && chmod +x ~/bin/jq
-    - pip install --upgrade awscli
-    - docker build --rm=false -t bellkev/ecs-demo:$CIRCLE_SHA1 . | cat
-    - docker pull bellkev/nginx-base:stable | cat
-test:
-  override:
-    - nosetests
-    - docker run --name uwsgi bellkev/ecs-demo:$CIRCLE_SHA1:
-        background: true
-    - docker run --name nginx -p 8000:8000 --link uwsgi:uwsgi bellkev/nginx-base:stable:
-        background: true
-    - sleep 3
-    - curl http://$DOCKER_IP:8000 | grep "Hello"
-    - do-if-commit-tag ondemand ./test.sh single
-    - do-exclusively --tag staging ./test.sh cluster
+  environment:
+    DOCKER_HOST: tcp://127.0.0.1:2375
+    MAVEN_OPTS: -Xmx128m
+
+general:
+  artifacts:
+    - artifacts
