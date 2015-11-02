@@ -13,7 +13,7 @@ test:
 
 machine:
   pre:
-    - helios/circle.sh pre_machine
+    - commons-csv/circle.sh pre_machine
   services:
     - docker
   environment:
