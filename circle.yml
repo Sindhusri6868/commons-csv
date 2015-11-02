@@ -1,19 +1,19 @@
 dependencies:
   override:
-    - ./circle.sh dependencies
+    - ./README.md dependencies
 
 test:
   pre:
-    - ./circle.sh pre_test
+    - ./README.md pre_test
   override:
-    - ./circle.sh test:
+    - ./README.md test:
         parallel: true
   post:
     - ./circle.sh post_test
 
 machine:
   pre:
-    - commons-csv/circle.sh pre_machine
+    - commons-csv/README.md pre_machine
   services:
     - docker
   environment:
